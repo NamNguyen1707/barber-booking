@@ -17,6 +17,21 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+app.use('/api/auth', require('./routes/auth.routes'));
+
+// Xử lý lỗi chung
+app.use((err, req, res, next) => {
+  if (err.number >= 50000) {                       // lỗi nghiệp vụ từ trigger/procedure
+    return res.status(400).json({ message: err.message });
+  }
+  if (err.number === 2627 || err.number === 2601) { // trùng khóa unique
+    return res.status(409).json({ message: 'Dữ liệu đã tồn tại' });
+  }
+  if (err.status) return res.status(err.status).json({ message: err.message });
+  console.error(err);
+  res.status(500).json({ message: 'Lỗi hệ thống' });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server chạy tại http://localhost:${PORT}`);
