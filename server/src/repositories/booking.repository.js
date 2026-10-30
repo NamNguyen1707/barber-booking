@@ -6,7 +6,7 @@ function unwrap(err) {
 }
 
 // F3: gọi sp_DatLich
-async function createBooking({ maKH, maTho, date, time, ds, ghiChu }) {
+async function createBooking({ maKH, maTho, date, time, ds, ghiChu, kenh = 'ONLINE' }) {
   const pool = await getPool();
   try {
     const r = await pool.request()
@@ -16,12 +16,13 @@ async function createBooking({ maKH, maTho, date, time, ds, ghiChu }) {
       .input('time', sql.VarChar(8), time)
       .input('ds', sql.VarChar(200), ds)
       .input('ghiChu', sql.NVarChar(300), ghiChu || null)
+      .input('kenh', sql.VarChar(20), kenh)
       .query(`
         DECLARE @id INT,
                 @d DATE = CAST(@date AS DATE),
                 @t TIME(0) = CAST(@time AS TIME(0));
         EXEC sp_DatLich @MaKH = @maKH, @MaTho = @maTho, @NgayHen = @d, @GioBatDau = @t,
-                        @DsDV = @ds, @Kenh = 'ONLINE', @GhiChu = @ghiChu, @MaLH = @id OUTPUT;
+                        @DsDV = @ds, @Kenh = @kenh, @GhiChu = @ghiChu, @MaLH = @id OUTPUT;
         SELECT @id AS MaLH;`);
     return r.recordset[0].MaLH;
   } catch (err) {

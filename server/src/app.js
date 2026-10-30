@@ -20,6 +20,7 @@ app.get('/api/health', async (req, res) => {
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api', require('./routes/catalog.routes'));
 app.use('/api/bookings', require('./routes/booking.routes'));
+app.use('/api/staff', require('./routes/staff.routes'));
 // Xử lý lỗi chung
 app.use((err, req, res, next) => {
   if (err.number >= 50000) {                       // lỗi nghiệp vụ từ trigger/procedure
