@@ -1,8 +1,12 @@
 const repo = require('../repositories/booking.repository');
 const { AppError } = require('./auth.service');
 
+function requireCustomer(user) {
+  if (!user.maKH) throw new AppError('Chỉ khách hàng mới dùng được chức năng này', 403);
+}
+
 async function create(user, body) {
-  if (!user.maKH) throw new AppError('Chỉ khách hàng mới được đặt lịch', 403);
+  requireCustomer(user);
 
   const maTho = Number(body.maTho);
   if (!Number.isInteger(maTho) || maTho <= 0) throw new AppError('Vui lòng chọn thợ cắt tóc');
@@ -28,4 +32,17 @@ async function create(user, body) {
   return repo.getBookingById(maLH);
 }
 
-module.exports = { create };
+async function listMine(user) {
+  requireCustomer(user);
+  return repo.getBookingsByCustomer(user.maKH);
+}
+
+async function cancel(user, id) {
+  requireCustomer(user);
+  const maLH = Number(id);
+  if (!Number.isInteger(maLH) || maLH <= 0) throw new AppError('Mã lịch hẹn không hợp lệ');
+  await repo.cancelBooking(maLH, user.maKH);
+  return repo.getBookingById(maLH);
+}
+
+module.exports = { create, listMine, cancel };
