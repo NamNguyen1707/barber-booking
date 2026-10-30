@@ -36,13 +36,14 @@ async function createCustomer({ hoTen, phone, email, hash, role }) {
       .input('hash', sql.VarChar(255), hash)
       .input('role', sql.VarChar(20), role)
       .query(`INSERT INTO NGUOIDUNG (HoTen, SoDienThoai, Email, MatKhauHash, VaiTro)
-              OUTPUT INSERTED.MaND
-              VALUES (@hoTen, @phone, @email, @hash, @role)`);
+              VALUES (@hoTen, @phone, @email, @hash, @role);
+              SELECT CAST(SCOPE_IDENTITY() AS INT) AS MaND;`);
     const maND = u.recordset[0].MaND;
 
     const k = await new sql.Request(tx)
       .input('maND', sql.Int, maND)
-      .query(`INSERT INTO KHACHHANG (MaND) OUTPUT INSERTED.MaKH VALUES (@maND)`);
+      .query(`INSERT INTO KHACHHANG (MaND) VALUES (@maND);
+              SELECT CAST(SCOPE_IDENTITY() AS INT) AS MaKH;`);
 
     await tx.commit();
     return { maND, maKH: k.recordset[0].MaKH };
