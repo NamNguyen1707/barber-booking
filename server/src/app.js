@@ -4,7 +4,7 @@ const cors = require('cors');
 const { getPool } = require('./config/db');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : true }));
 app.use(express.json());
 
 app.get('/api/health', async (req, res) => {
@@ -21,12 +21,13 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api', require('./routes/catalog.routes'));
 app.use('/api/bookings', require('./routes/booking.routes'));
 app.use('/api/staff', require('./routes/staff.routes'));
-app.use('/api/staff/invoices', require('./routes/invoice.routes')); 
+app.use('/api/staff/invoices', require('./routes/invoice.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
 app.use('/api/admin/stats', require('./routes/stats.routes'));
+
 // Xử lý lỗi chung
 app.use((err, req, res, next) => {
-  if (err.number >= 50000) {                       // lỗi nghiệp vụ từ trigger/procedure
+  if (err.number >= 50000) {                        // lỗi nghiệp vụ từ trigger/procedure
     return res.status(400).json({ message: err.message });
   }
   if (err.number === 2627 || err.number === 2601) { // trùng khóa unique
@@ -40,4 +41,12 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server chạy tại http://localhost:${PORT}`);
+
+  // Tự sinh ca làm việc cho 15 ngày tới: lúc khởi động và lặp lại mỗi 6 giờ
+  const genShifts = () =>
+    require('./services/shift.service')
+      .ensureDefaultShifts()
+      .catch((e) => console.error('Shifts:', e.message));
+  genShifts();
+  setInterval(genShifts, 6 * 60 * 60 * 1000);
 });

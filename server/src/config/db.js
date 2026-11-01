@@ -8,9 +8,11 @@ const config = {
   password: process.env.DB_PASSWORD,
   port: Number(process.env.DB_PORT) || 1433,
   options: {
-    encrypt: false,
-    trustServerCertificate: true,
+    encrypt: process.env.DB_ENCRYPT === 'true',
+    trustServerCertificate: process.env.DB_TRUST_CERT !== 'false',
   },
+  connectionTimeout: 60000,
+  requestTimeout: 60000,  
 };
 
 let poolPromise;
