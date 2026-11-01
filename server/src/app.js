@@ -23,6 +23,7 @@ app.use('/api/bookings', require('./routes/booking.routes'));
 app.use('/api/staff', require('./routes/staff.routes'));
 app.use('/api/staff/invoices', require('./routes/invoice.routes')); 
 app.use('/api/admin', require('./routes/admin.routes'));
+app.use('/api/admin/stats', require('./routes/stats.routes'));
 // Xử lý lỗi chung
 app.use((err, req, res, next) => {
   if (err.number >= 50000) {                       // lỗi nghiệp vụ từ trigger/procedure
