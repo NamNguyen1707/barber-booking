@@ -1,103 +1,52 @@
-const { getPool } = require('../config/db');
-
-const unwrap = (err) => {
-  if (err.errno >= 50000) {
-    err.message = err.sqlMessage || err.message;
-  }
-  return err;
-};
-
-// Thông tin lịch hẹn + các dịch vụ + mã hóa đơn nếu đã có
-async function getBookingForInvoice(maLH) {
-  const pool = await getPool();
-  const [hRows] = await pool.query(`
-    SELECT l.MaLH, l.TrangThaiLH,
-           DATE_FORMAT(l.NgayHen, '%Y-%m-%d') AS NgayHen,
-           TIME_FORMAT(l.GioBatDau, '%H:%i')  AS GioBatDau,
-           ndk.HoTen AS KhachHang, ndk.SoDienThoai AS SDTKhach,
-           k.HangThanhVien, k.DiemTichLuy,
-           ndt.HoTen AS ThoCatToc,
-           hd.MaHD
-    FROM LICHHEN l
-    JOIN KHACHHANG k   ON k.MaKH  = l.MaKH
-    JOIN NGUOIDUNG ndk ON ndk.MaND = k.MaND
-    JOIN THOCATTOC t   ON t.MaTho = l.MaTho
-    JOIN NGUOIDUNG ndt ON ndt.MaND = t.MaND
-    LEFT JOIN HOADON hd ON hd.MaLH = l.MaLH
-    WHERE l.MaLH = ?`,
-    [maLH]
-  );
-  if (!hRows[0]) return null;
-
-  const [lines] = await pool.query(`
-    SELECT d.MaDV, d.TenDV, c.DonGiaApDung, c.ThoiLuongPhut
-    FROM CHITIET_LICHHEN c JOIN DICHVU d ON d.MaDV = c.MaDV
-    WHERE c.MaLH = ? ORDER BY c.MaCTLH`,
-    [maLH]
-  );
-  return { ...hRows[0], ChiTiet: lines };
-}
-
-// sp_LapHoaDon tự tính giảm giá; trigger tự cộng điểm và nâng hạng
-async function createInvoice({ maLH, cashierId, method }) {
-  const pool = await getPool();
-  try {
-    await pool.query(
-      'CALL sp_LapHoaDon(?, ?, ?)',
-      [maLH, cashierId, method]
-    );
-  } catch (err) {
-    throw unwrap(err);
-  }
-}
+const { query } = require('../config/db');
 
 const INVOICE_SELECT = `
-  SELECT h.MaHD, h.MaLH,
-         DATE_FORMAT(h.NgayThanhToan, '%Y-%m-%d %H:%i:%s') AS NgayThanhToan,
-         h.TongTienDV, h.GiamGia, h.ThanhTien, h.PhuongThucTT, h.TrangThaiTT,
-         ndc.HoTen AS ThuNgan,
-         ndk.HoTen AS KhachHang, ndk.SoDienThoai AS SDTKhach,
-         k.HangThanhVien, k.DiemTichLuy,
-         ndt.HoTen AS ThoCatToc
-  FROM HOADON h
-  JOIN LICHHEN l     ON l.MaLH = h.MaLH
-  JOIN KHACHHANG k   ON k.MaKH = l.MaKH
-  JOIN NGUOIDUNG ndk ON ndk.MaND = k.MaND
-  JOIN THOCATTOC t   ON t.MaTho = l.MaTho
-  JOIN NGUOIDUNG ndt ON ndt.MaND = t.MaND
-  JOIN NGUOIDUNG ndc ON ndc.MaND = h.NVThuNgan`;
+  SELECT h.MaHD, h.MaLH, h.NgayThanhToan, h.TongTienDV, h.GiamGia, h.ThanhTien,
+         h.PhuongThucTT, h.TrangThaiTT,
+         ntn.HoTen AS ThuNgan, ndk.HoTen AS KhachHang, ndk.SoDienThoai AS SDTKhach,
+         k.HangThanhVien, k.DiemTichLuy, ndt.HoTen AS ThoCatToc
+    FROM HOADON h
+    JOIN LICHHEN l ON l.MaLH = h.MaLH
+    JOIN KHACHHANG k ON k.MaKH = l.MaKH JOIN NGUOIDUNG ndk ON ndk.MaND = k.MaND
+    JOIN THOCATTOC t ON t.MaTho = l.MaTho JOIN NGUOIDUNG ndt ON ndt.MaND = t.MaND
+    JOIN NGUOIDUNG ntn ON ntn.MaND = h.NVThuNgan`;
 
-async function getInvoiceByBooking(maLH) {
-  const pool = await getPool();
-  const [hRows] = await pool.query(`${INVOICE_SELECT} WHERE h.MaLH = ?`, [maLH]);
-  if (!hRows[0]) return null;
-
-  const [lines] = await pool.query(`
-    SELECT d.TenDV, c.DonGiaApDung, c.ThoiLuongPhut
-    FROM CHITIET_LICHHEN c JOIN DICHVU d ON d.MaDV = c.MaDV
-    WHERE c.MaLH = ? ORDER BY c.MaCTLH`,
+// Thông tin lịch hẹn + tổng tiền dịch vụ để xem trước hóa đơn
+async function getBookingForInvoice(maLH) {
+  const rows = await query(
+    `SELECT l.MaLH, l.TrangThaiLH, l.NgayHen, ndk.HoTen AS KhachHang, ndk.SoDienThoai AS SDTKhach,
+            k.HangThanhVien, k.DiemTichLuy,
+            (SELECT IFNULL(SUM(c.DonGiaApDung), 0) FROM CHITIET_LICHHEN c WHERE c.MaLH = l.MaLH) AS TongTienDV,
+            (SELECT GROUP_CONCAT(d.TenDV ORDER BY d.MaDV SEPARATOR ', ')
+               FROM CHITIET_LICHHEN c JOIN DICHVU d ON d.MaDV = c.MaDV WHERE c.MaLH = l.MaLH) AS DichVu,
+            EXISTS (SELECT 1 FROM HOADON h WHERE h.MaLH = l.MaLH) AS DaCoHoaDon
+       FROM LICHHEN l
+       JOIN KHACHHANG k ON k.MaKH = l.MaKH JOIN NGUOIDUNG ndk ON ndk.MaND = k.MaND
+      WHERE l.MaLH = ?`,
     [maLH]
   );
-  return { ...hRows[0], ChiTiet: lines };
+  return rows[0] || null;
 }
 
-async function listInvoices(date) {
-  const pool = await getPool();
-  if (date) {
-    const [rows] = await pool.query(
-      `${INVOICE_SELECT}
-       WHERE DATE(h.NgayThanhToan) = ?
-       ORDER BY h.NgayThanhToan DESC`,
-      [date]
-    );
-    return rows;
-  } else {
-    const [rows] = await pool.query(
-      `${INVOICE_SELECT}
-       ORDER BY h.NgayThanhToan DESC`
-    );
-    return rows;
-  }
+async function createInvoice(maLH, maNV, phuongThuc) {
+  await query('CALL sp_LapHoaDon(?, ?, ?)', [maLH, maNV, phuongThuc]);
+}
+
+async function getInvoiceByBooking(maLH) {
+  const rows = await query(`${INVOICE_SELECT} WHERE h.MaLH = ?`, [maLH]);
+  return rows[0] || null;
+}
+
+async function listInvoices({ from, to }) {
+  const where = [];
+  const params = [];
+  if (from) { where.push('DATE(h.NgayThanhToan) >= ?'); params.push(from); }
+  if (to) { where.push('DATE(h.NgayThanhToan) <= ?'); params.push(to); }
+  return query(
+    `${INVOICE_SELECT} ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+      ORDER BY h.NgayThanhToan DESC, h.MaHD DESC LIMIT 200`,
+    params
+  );
 }
 
 module.exports = { getBookingForInvoice, createInvoice, getInvoiceByBooking, listInvoices };

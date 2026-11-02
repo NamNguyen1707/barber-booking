@@ -1,62 +1,58 @@
 const repo = require('../repositories/invoice.repository');
-const { AppError } = require('./auth.service');
+const { AppError } = require('./app-error');
+const { pick, parseId, parseDate } = require('../utils/helpers');
 
+const DISCOUNT = { THUONG: 0, BAC: 0.05, VANG: 0.1, VIP: 0.1 };
 const METHODS = ['TIENMAT', 'CHUYENKHOAN_QR'];
-const DISCOUNT = { BAC: 0.05, VANG: 0.1, VIP: 0.1 };   // phải khớp với sp_LapHoaDon
 
-const pad = (n) => String(n).padStart(2, '0');
-const today = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
-
-function toId(v) {
-  const n = Number(v);
-  if (!Number.isInteger(n) || n <= 0) throw new AppError('Mã lịch hẹn không hợp lệ');
-  return n;
-}
-
-async function preview(maLH) {
-  const b = await repo.getBookingForInvoice(toId(maLH));
+// Xem trước số tiền sẽ thu (cùng công thức với sp_LapHoaDon)
+async function preview(idRaw) {
+  const maLH = parseId(idRaw, 'Mã lịch hẹn');
+  const b = await repo.getBookingForInvoice(maLH);
   if (!b) throw new AppError('Không tìm thấy lịch hẹn', 404);
-
-  const tong = b.ChiTiet.reduce((s, d) => s + d.DonGiaApDung, 0);
-  const giam = Math.round(tong * (DISCOUNT[b.HangThanhVien] || 0));
+  const pct = DISCOUNT[b.HangThanhVien] ?? 0;
+  const giamGia = Math.round(b.TongTienDV * pct);
   return {
-    ...b,
-    TongTienDV: tong,
-    GiamGia: giam,
-    ThanhTien: tong - giam,
-    DaCoHoaDon: !!b.MaHD,
-    CoTheLapHoaDon: b.TrangThaiLH === 'HoanThanh' && !b.MaHD,
+    MaLH: b.MaLH,
+    TrangThaiLH: b.TrangThaiLH,
+    KhachHang: b.KhachHang,
+    SDTKhach: b.SDTKhach,
+    HangThanhVien: b.HangThanhVien,
+    DichVu: b.DichVu,
+    TongTienDV: b.TongTienDV,
+    PhanTramGiam: pct * 100,
+    GiamGia: giamGia,
+    ThanhTien: b.TongTienDV - giamGia,
+    DaCoHoaDon: !!b.DaCoHoaDon,
+    CoTheLap: b.TrangThaiLH === 'HoanThanh' && !b.DaCoHoaDon,
   };
 }
 
-async function create(user, body = {}) {
-  const maLH = toId(body.maLH);
-  if (!METHODS.includes(body.phuongThuc))
-    throw new AppError('Phương thức thanh toán phải là TIENMAT hoặc CHUYENKHOAN_QR');
+async function create(user, body) {
+  const maLH = parseId(pick(body || {}, 'maLH', 'MaLH'), 'Mã lịch hẹn');
+  const phuongThuc = pick(body || {}, 'phuongThuc', 'PhuongThucTT');
+  if (!METHODS.includes(phuongThuc)) throw new AppError(`phuongThuc phải là một trong: ${METHODS.join(', ')}`, 400);
 
   const b = await repo.getBookingForInvoice(maLH);
   if (!b) throw new AppError('Không tìm thấy lịch hẹn', 404);
-  if (b.MaHD) throw new AppError('Lịch hẹn này đã có hóa đơn', 409);
-  if (b.TrangThaiLH !== 'HoanThanh')
-    throw new AppError('BR08: Chỉ lập hóa đơn cho lịch hẹn đã hoàn thành');
+  if (b.DaCoHoaDon) throw new AppError('Lịch hẹn này đã có hóa đơn', 409);
+  if (b.TrangThaiLH !== 'HoanThanh') throw new AppError('Chỉ lập hóa đơn cho lịch hẹn đã hoàn thành', 400);
 
-  await repo.createInvoice({ maLH, cashierId: user.id, method: body.phuongThuc });
+  await repo.createInvoice(maLH, user.id, phuongThuc); // trigger BR08 + tích điểm + nâng hạng
   return repo.getInvoiceByBooking(maLH);
 }
 
-async function getByBooking(maLH) {
-  const inv = await repo.getInvoiceByBooking(toId(maLH));
+async function getByBooking(idRaw) {
+  const inv = await repo.getInvoiceByBooking(parseId(idRaw, 'Mã lịch hẹn'));
   if (!inv) throw new AppError('Lịch hẹn này chưa có hóa đơn', 404);
   return inv;
 }
 
-async function list(q = {}) {
-  const date = q.date === 'all' ? null : (q.date || today());
-  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new AppError('Ngày phải có dạng YYYY-MM-DD');
-  return repo.listInvoices(date);
+function list(q) {
+  return repo.listInvoices({
+    from: q.from ? parseDate(q.from, 'from') : null,
+    to: q.to ? parseDate(q.to, 'to') : null,
+  });
 }
 
 module.exports = { preview, create, getByBooking, list };

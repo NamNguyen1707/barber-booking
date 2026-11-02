@@ -1,17 +1,11 @@
 const bcrypt = require('bcryptjs');
 const repo = require('../repositories/admin.repository');
-const { AppError } = require('./auth.service');
+const { AppError } = require('./app-error');
 const shift = require('./shift.service');
+const { str, parseId } = require('../utils/helpers');
 
 const LOAI_DV = ['CatGoi', 'UonToc', 'NhuomToc', 'Combo'];
 const TT_THO = ['DANGLAMVIEC', 'TAMNGHI', 'DANGHIVIEC'];
-
-function parseId(v) {
-  const n = Number(v);
-  if (!Number.isInteger(n) || n <= 0) throw new AppError('Mã không hợp lệ', 400);
-  return n;
-}
-const str = (v) => (typeof v === 'string' ? v.trim() : v);
 
 /* ---------- Dịch vụ ---------- */
 function validateService(d, isCreate) {
@@ -40,13 +34,12 @@ function validateService(d, isCreate) {
   return out;
 }
 
-async function listServices() { return repo.listServices(); }
+const listServices = () => repo.listServices();
 
 async function createService(body) {
   const d = validateService(body || {}, true);
   if (await repo.serviceNameExists(d.tenDV)) throw new AppError('Tên dịch vụ đã tồn tại', 409);
-  const id = await repo.createService(d);
-  return repo.getServiceById(id);
+  return repo.getServiceById(await repo.createService(d));
 }
 
 async function updateService(idRaw, body) {
@@ -68,13 +61,14 @@ async function setServiceStatus(idRaw, body) {
 }
 
 /* ---------- Thợ ---------- */
-async function listBarbers() { return repo.listBarbers(); }
+const listBarbers = () => repo.listBarbers();
 
 async function createBarber(body) {
   const b = body || {};
   const hoTen = str(b.hoTen);
   const sdt = str(b.soDienThoai);
   const chuyenMon = str(b.chuyenMon);
+  const email = str(b.email) || null;
   const soNamKN = b.soNamKN === undefined ? 0 : Number(b.soNamKN);
 
   if (!hoTen) throw new AppError('Thiếu họ tên', 400);
@@ -83,17 +77,15 @@ async function createBarber(body) {
   if (!chuyenMon) throw new AppError('Thiếu chuyên môn', 400);
   if (!Number.isInteger(soNamKN) || soNamKN < 0) throw new AppError('Số năm kinh nghiệm không hợp lệ', 400);
   if (await repo.phoneExists(sdt)) throw new AppError('Số điện thoại đã được sử dụng', 409);
+  if (email && (await repo.emailExists(email))) throw new AppError('Email đã được sử dụng', 409);
 
   const hash = await bcrypt.hash(b.matKhau, 10);
   const maTho = await repo.createBarber(
-    { hoTen, soDienThoai: sdt, email: str(b.email) || null, chuyenMon, soNamKN,
-      gioiThieu: str(b.gioiThieu), anhDaiDien: str(b.anhDaiDien) },
+    { hoTen, soDienThoai: sdt, email, chuyenMon, soNamKN, gioiThieu: str(b.gioiThieu), anhDaiDien: str(b.anhDaiDien) },
     hash
   );
-
   // Sinh ca làm việc mặc định để khách đặt được ngay (RB04)
   try { await shift.ensureDefaultShifts(); } catch (e) { console.error('ensureDefaultShifts:', e.message); }
-
   return repo.getBarberById(maTho);
 }
 

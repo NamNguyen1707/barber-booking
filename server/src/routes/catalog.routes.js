@@ -1,8 +1,8 @@
 const router = require('express').Router();
 const c = require('../controllers/catalog.controller');
 
-router.get('/services', c.services);
-router.get('/barbers', c.barbers);
-router.get('/slots', c.slots);
+router.get('/services', c.listServices);
+router.get('/barbers', c.listBarbers);
+router.get('/slots', c.getSlots);
 
 module.exports = router;

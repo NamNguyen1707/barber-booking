@@ -4,6 +4,6 @@ const { verifyToken } = require('../middlewares/auth');
 
 router.post('/register', c.register);
 router.post('/login', c.login);
-router.get('/me', verifyToken, (req, res) => res.json({ user: req.user }));
+router.get('/me', verifyToken, c.me);
 
 module.exports = router;

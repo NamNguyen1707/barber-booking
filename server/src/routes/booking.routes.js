@@ -3,10 +3,10 @@ const c = require('../controllers/booking.controller');
 const { verifyToken, requireRole } = require('../middlewares/auth');
 const { ROLES } = require('../config/constants');
 
-const customerOnly = [verifyToken, requireRole(ROLES.KHACHHANG)];
+router.use(verifyToken, requireRole(ROLES.KHACHHANG));
 
-router.post('/', customerOnly, c.create);
-router.get('/me', customerOnly, c.mine);
-router.patch('/:id/cancel', customerOnly, c.cancel);
+router.post('/', c.create);
+router.get('/me', c.listMine);
+router.patch('/:id/cancel', c.cancel);
 
 module.exports = router;
