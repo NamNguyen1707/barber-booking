@@ -1,48 +1,51 @@
-const { sql, getPool } = require('../config/db');
+const { getPool } = require('../config/db');
 
-const unwrap = (err) =>
-  [err, ...(err.precedingErrors || [])].find((e) => e.number >= 50000) || err;
+const unwrap = (err) => {
+  if (err.errno >= 50000) {
+    err.message = err.sqlMessage || err.message;
+  }
+  return err;
+};
 
 // Thông tin lịch hẹn + các dịch vụ + mã hóa đơn nếu đã có
 async function getBookingForInvoice(maLH) {
   const pool = await getPool();
-  const h = await pool.request()
-    .input('id', sql.Int, maLH)
-    .query(`
-      SELECT l.MaLH, l.TrangThaiLH,
-             CONVERT(varchar(10), l.NgayHen, 23)    AS NgayHen,
-             CONVERT(varchar(5),  l.GioBatDau, 108) AS GioBatDau,
-             ndk.HoTen AS KhachHang, ndk.SoDienThoai AS SDTKhach,
-             k.HangThanhVien, k.DiemTichLuy,
-             ndt.HoTen AS ThoCatToc,
-             hd.MaHD
-      FROM LICHHEN l
-      JOIN KHACHHANG k   ON k.MaKH  = l.MaKH
-      JOIN NGUOIDUNG ndk ON ndk.MaND = k.MaND
-      JOIN THOCATTOC t   ON t.MaTho = l.MaTho
-      JOIN NGUOIDUNG ndt ON ndt.MaND = t.MaND
-      LEFT JOIN HOADON hd ON hd.MaLH = l.MaLH
-      WHERE l.MaLH = @id`);
-  if (!h.recordset[0]) return null;
+  const [hRows] = await pool.query(`
+    SELECT l.MaLH, l.TrangThaiLH,
+           DATE_FORMAT(l.NgayHen, '%Y-%m-%d') AS NgayHen,
+           TIME_FORMAT(l.GioBatDau, '%H:%i')  AS GioBatDau,
+           ndk.HoTen AS KhachHang, ndk.SoDienThoai AS SDTKhach,
+           k.HangThanhVien, k.DiemTichLuy,
+           ndt.HoTen AS ThoCatToc,
+           hd.MaHD
+    FROM LICHHEN l
+    JOIN KHACHHANG k   ON k.MaKH  = l.MaKH
+    JOIN NGUOIDUNG ndk ON ndk.MaND = k.MaND
+    JOIN THOCATTOC t   ON t.MaTho = l.MaTho
+    JOIN NGUOIDUNG ndt ON ndt.MaND = t.MaND
+    LEFT JOIN HOADON hd ON hd.MaLH = l.MaLH
+    WHERE l.MaLH = ?`,
+    [maLH]
+  );
+  if (!hRows[0]) return null;
 
-  const lines = await pool.request()
-    .input('id', sql.Int, maLH)
-    .query(`
-      SELECT d.MaDV, d.TenDV, c.DonGiaApDung, c.ThoiLuongPhut
-      FROM CHITIET_LICHHEN c JOIN DICHVU d ON d.MaDV = c.MaDV
-      WHERE c.MaLH = @id ORDER BY c.MaCTLH`);
-  return { ...h.recordset[0], ChiTiet: lines.recordset };
+  const [lines] = await pool.query(`
+    SELECT d.MaDV, d.TenDV, c.DonGiaApDung, c.ThoiLuongPhut
+    FROM CHITIET_LICHHEN c JOIN DICHVU d ON d.MaDV = c.MaDV
+    WHERE c.MaLH = ? ORDER BY c.MaCTLH`,
+    [maLH]
+  );
+  return { ...hRows[0], ChiTiet: lines };
 }
 
 // sp_LapHoaDon tự tính giảm giá; trigger tự cộng điểm và nâng hạng
 async function createInvoice({ maLH, cashierId, method }) {
   const pool = await getPool();
   try {
-    await pool.request()
-      .input('maLH', sql.Int, maLH)
-      .input('nv', sql.Int, cashierId)
-      .input('pt', sql.VarChar(30), method)
-      .query('EXEC sp_LapHoaDon @MaLH = @maLH, @NVThuNgan = @nv, @PhuongThuc = @pt');
+    await pool.query(
+      'CALL sp_LapHoaDon(?, ?, ?)',
+      [maLH, cashierId, method]
+    );
   } catch (err) {
     throw unwrap(err);
   }
@@ -50,7 +53,7 @@ async function createInvoice({ maLH, cashierId, method }) {
 
 const INVOICE_SELECT = `
   SELECT h.MaHD, h.MaLH,
-         CONVERT(varchar(19), h.NgayThanhToan, 120) AS NgayThanhToan,
+         DATE_FORMAT(h.NgayThanhToan, '%Y-%m-%d %H:%i:%s') AS NgayThanhToan,
          h.TongTienDV, h.GiamGia, h.ThanhTien, h.PhuongThucTT, h.TrangThaiTT,
          ndc.HoTen AS ThuNgan,
          ndk.HoTen AS KhachHang, ndk.SoDienThoai AS SDTKhach,
@@ -66,28 +69,35 @@ const INVOICE_SELECT = `
 
 async function getInvoiceByBooking(maLH) {
   const pool = await getPool();
-  const h = await pool.request()
-    .input('id', sql.Int, maLH)
-    .query(`${INVOICE_SELECT} WHERE h.MaLH = @id`);
-  if (!h.recordset[0]) return null;
+  const [hRows] = await pool.query(`${INVOICE_SELECT} WHERE h.MaLH = ?`, [maLH]);
+  if (!hRows[0]) return null;
 
-  const lines = await pool.request()
-    .input('id', sql.Int, maLH)
-    .query(`
-      SELECT d.TenDV, c.DonGiaApDung, c.ThoiLuongPhut
-      FROM CHITIET_LICHHEN c JOIN DICHVU d ON d.MaDV = c.MaDV
-      WHERE c.MaLH = @id ORDER BY c.MaCTLH`);
-  return { ...h.recordset[0], ChiTiet: lines.recordset };
+  const [lines] = await pool.query(`
+    SELECT d.TenDV, c.DonGiaApDung, c.ThoiLuongPhut
+    FROM CHITIET_LICHHEN c JOIN DICHVU d ON d.MaDV = c.MaDV
+    WHERE c.MaLH = ? ORDER BY c.MaCTLH`,
+    [maLH]
+  );
+  return { ...hRows[0], ChiTiet: lines };
 }
 
 async function listInvoices(date) {
   const pool = await getPool();
-  const r = await pool.request()
-    .input('date', sql.VarChar(10), date || null)
-    .query(`${INVOICE_SELECT}
-            WHERE (@date IS NULL OR CAST(h.NgayThanhToan AS DATE) = CAST(@date AS DATE))
-            ORDER BY h.NgayThanhToan DESC`);
-  return r.recordset;
+  if (date) {
+    const [rows] = await pool.query(
+      `${INVOICE_SELECT}
+       WHERE DATE(h.NgayThanhToan) = ?
+       ORDER BY h.NgayThanhToan DESC`,
+      [date]
+    );
+    return rows;
+  } else {
+    const [rows] = await pool.query(
+      `${INVOICE_SELECT}
+       ORDER BY h.NgayThanhToan DESC`
+    );
+    return rows;
+  }
 }
 
 module.exports = { getBookingForInvoice, createInvoice, getInvoiceByBooking, listInvoices };

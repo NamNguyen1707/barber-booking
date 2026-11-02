@@ -10,10 +10,10 @@ app.use(express.json());
 app.get('/api/health', async (req, res) => {
   try {
     const pool = await getPool();
-    await pool.request().query('SELECT 1 AS ok');
+    await pool.query('SELECT 1');
     res.json({ status: 'OK', database: 'connected' });
   } catch (err) {
-    res.status(500).json({ status: 'ERROR', message: err.message });
+    res.status(500).json({ database: 'ERROR' });
   }
 });
 
@@ -27,10 +27,12 @@ app.use('/api/admin/stats', require('./routes/stats.routes'));
 
 // Xử lý lỗi chung
 app.use((err, req, res, next) => {
-  if (err.number >= 50000) {                        // lỗi nghiệp vụ từ trigger/procedure
-    return res.status(400).json({ message: err.message });
+  const errno = err.errno ?? err.number;
+  if (errno >= 50000) {
+    const status = errno === 50015 ? 409 : 400;
+    return res.status(status).json({ message: err.sqlMessage || err.message });
   }
-  if (err.number === 2627 || err.number === 2601) { // trùng khóa unique
+  if (errno === 1062 || errno === 2627 || errno === 2601) { // trùng khóa unique
     return res.status(409).json({ message: 'Dữ liệu đã tồn tại' });
   }
   if (err.status) return res.status(err.status).json({ message: err.message });
