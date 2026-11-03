@@ -494,34 +494,36 @@ WHERE c.TrangThaiCa = 'DANGMO';
 SET @pw = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
 
 INSERT INTO NGUOIDUNG (HoTen, SoDienThoai, Email, MatKhauHash, VaiTro) VALUES
- ('Nguyễn Hoài Nam',      '0900000001', 'quanly@tiemtoc.vn',  @pw, 'QUANLY'),    -- 1
- ('Nguyễn Thái Nguyên',   '0900000002', 'letan@tiemtoc.vn',   @pw, 'LETAN'),     -- 2
- ('Trương Minh Khang',    '0900000011', 'khang@tiemtoc.vn',   @pw, 'THOCAT'),    -- 3
- ('Đặng Chí Dũng',        '0900000012', 'dung@tiemtoc.vn',    @pw, 'THOCAT'),    -- 4
- ('Đặng Hồ Đăng Khôi',    '0900000013', 'khoi@tiemtoc.vn',    @pw, 'THOCAT'),    -- 5
- ('Trần Đăng Khoa',       '0900000014', 'khoa@tiemtoc.vn',    @pw, 'THOCAT'),    -- 6
- ('Trần Thanh Huy',       '0900000015', 'huythanh@tiemtoc.vn',@pw, 'THOCAT'),    -- 7
- ('Nguyễn Trần Anh Luân', '0900000016', 'luan@tiemtoc.vn',    @pw, 'THOCAT'),    -- 8
- ('Nguyễn Văn An',        '0911111111', 'an@gmail.com',       @pw, 'KHACHHANG'), -- 9
- ('Trần Hoàng Nam',       '0922222222', 'nam@gmail.com',      @pw, 'KHACHHANG'), -- 10
- ('Lý Gia Huy',           '0933333333', 'huy@gmail.com',      @pw, 'KHACHHANG'), -- 11
- ('Đỗ Minh Quân',         '0944444444', NULL,                 @pw, 'KHACHHANG'), -- 12 (walk-in)
- ('Admin Hệ Thống',       '0900000000', 'admin@tiemtoc.vn',   @pw, 'ADMIN');     -- 13
+ ('Nguyễn Hoài Nam',  '0900000001', 'quanly@tiemtoc.vn', @pw, 'QUANLY'),    -- 1
+ ('Nguyễn Thái Nguyên', '0900000002', 'letan@tiemtoc.vn',  @pw, 'LETAN'),     -- 2
+ ('Trương Minh Khang', '0900000011', 'khang@tiemtoc.vn',   @pw, 'THOCAT'),    -- 3
+ ('Đặng Chí Dũng',   '0900000012', 'dung@tiemtoc.vn',    @pw, 'THOCAT'),    -- 4
+ ('Đặng Hồ Đăng Khôi', '0900000013', 'khoi@tiemtoc.vn',   @pw, 'THOCAT'),    -- 5
+ ('Nguyễn Văn An',   '0911111111', 'an@gmail.com',      @pw, 'KHACHHANG'), -- 6
+ ('Trần Hoàng Nam',  '0922222222', 'nam@gmail.com',     @pw, 'KHACHHANG'), -- 7
+ ('Lý Gia Huy',      '0933333333', 'huy@gmail.com',     @pw, 'KHACHHANG'), -- 8
+ ('Đỗ Minh Quân',    '0944444444', NULL,                @pw, 'KHACHHANG'), -- 9 (walk-in)
+ ('Admin Hệ Thống',  '0900000000', 'admin@tiemtoc.vn',  @pw, 'ADMIN');     -- 10
+
+-- Ba thợ cắt tóc còn lại (MaND 11–13)
+INSERT INTO NGUOIDUNG (HoTen, SoDienThoai, Email, MatKhauHash, VaiTro) VALUES
+ ('Trần Đăng Khoa',      '0900000014', 'khoa@tiemtoc.vn',  @pw, 'THOCAT'),   -- 11
+ ('Trần Thanh Huy',      '0900000015', 'thanhhuy@tiemtoc.vn', @pw, 'THOCAT'), -- 12
+ ('Nguyễn Trần Anh Luân','0900000016', 'luan@tiemtoc.vn',  @pw, 'THOCAT');   -- 13
 
 INSERT INTO KHACHHANG (MaND, HangThanhVien, DiemTichLuy, GhiChuKieuToc) VALUES
- (9,  'BAC',    60, 'Hay cắt Undercut, tóc dày cứng'),
- (10, 'VANG',  160, 'Layer nam, thích vuốt sáp mờ'),
- (11, 'THUONG',  0, NULL),
- (12, 'THUONG',  0, 'Khách vãng lai');
+ (6, 'BAC',    60, 'Hay cắt Undercut, tóc dày cứng'),
+ (7, 'VANG',  160, 'Layer nam, thích vuốt sáp mờ'),
+ (8, 'THUONG',  0, NULL),
+ (9, 'THUONG',  0, 'Khách vãng lai');
 
--- MaTho: 1 Khang, 2 Dũng, 3 Khôi, 4 Khoa, 5 Huy, 6 Luân
 INSERT INTO THOCATTOC (MaND, ChuyenMon, SoNamKN, AnhDaiDien, GioiThieuNgan) VALUES
- (3, 'Undercut, Fade, Cắt tạo kiểu nam',          7,  '/img/tho/khang.jpg', 'Chuyên các kiểu tóc nam hiện đại, tỉ mỉ từng đường cắt.'),
- (4, 'Layer, Uốn Premlock, Nhuộm',                5,  '/img/tho/dung.jpg',  'Phong cách trẻ trung, thời thượng Hàn Quốc.'),
- (5, 'Cắt cổ điển, Cạo mặt, Chăm sóc da',         10, '/img/tho/khoi.jpg',  'Barber truyền thống với 10 năm kinh nghiệm.'),
- (6, 'Fade, Textured Crop, Cắt tạo kiểu nam',     6,  '/img/tho/khoa.jpg',  'Thế mạnh các kiểu fade sắc nét, tạo kiểu gọn gàng.'),
- (7, 'Nhuộm thời trang, Uốn Premlock',            4,  '/img/tho/huy.jpg',   'Nhuộm và uốn theo xu hướng, tư vấn màu phù hợp da.'),
- (8, 'Layer, Side Part, Combo cắt gội',           3,  '/img/tho/luan.jpg',  'Nhẹ nhàng, chu đáo, phù hợp khách thích kiểu tóc lịch sự.');
+ (3, 'Undercut, Fade, Cắt tạo kiểu nam',      7,  '/img/tho/khoa.jpg', 'Chuyên các kiểu tóc nam hiện đại, tỉ mỉ từng đường cắt.'),
+ (4, 'Layer, Uốn Premlock, Nhuộm',            5,  '/img/tho/bao.jpg',  'Phong cách trẻ trung, thời thượng Hàn Quốc.'),
+ (5, 'Cắt cổ điển, Cạo mặt, Chăm sóc da',     10, '/img/tho/tung.jpg', 'Barber truyền thống với 10 năm kinh nghiệm.'),
+ (11, 'Fade, Taper, Cắt tóc nam công sở',       6,  '/img/tho/khoa.jpg', 'Đường cắt gọn gàng, phù hợp phong cách công sở.'),
+ (12, 'Layer, Side part, Tạo kiểu vuốt sáp',    4,  '/img/tho/huy.jpg',  'Trẻ trung, nhiệt tình, bắt trend nhanh.'),
+ (13, 'Uốn, Nhuộm, Chăm sóc tóc',               8,  '/img/tho/luan.jpg', 'Chuyên các kiểu tóc có màu và độ phồng tự nhiên.');
 
 INSERT INTO DICHVU (TenDV, LoaiDV, DonGia, ThoiLuongPhut, MoTaDV) VALUES
  ('Cắt tóc tạo kiểu',          'CatGoi',   100000, 30, 'Tư vấn kiểu, cắt và tạo kiểu bằng sáp.'),
@@ -544,9 +546,6 @@ CROSS JOIN (SELECT -3 AS n UNION ALL SELECT -2 UNION ALL SELECT -1 UNION ALL SEL
 
 UPDATE CALAMVIEC SET TrangThaiCa = 'NGHIPHEP'
  WHERE MaTho = 1 AND NgayLamViec = DATE_ADD(@today, INTERVAL 3 DAY);
-
-UPDATE CALAMVIEC SET TrangThaiCa = 'NGHIPHEP'
- WHERE MaTho = 5 AND NgayLamViec = DATE_ADD(@today, INTERVAL 5 DAY);
 
 SET @d_2 = DATE_SUB(@today, INTERVAL 2 DAY);
 SET @d_1 = DATE_SUB(@today, INTERVAL 1 DAY);
@@ -594,34 +593,3 @@ INSERT INTO LICHHEN (MaKH,MaTho,NgayHen,GioBatDau,GioKetThucDK,TongThoiLuong,Ton
 VALUES (3,2,@d2,'15:00:00','16:30:00',90,400000,'ONLINE','Muốn uốn nhẹ','ChoXacNhan');
 SET @id = LAST_INSERT_ID();
 INSERT INTO CHITIET_LICHHEN (MaLH,MaDV,DonGiaApDung,ThoiLuongPhut) VALUES (@id,4,400000,90);
-
--- (5) Thêm lịch mẫu cho các thợ còn lại (Khoa, Huy, Luân)
-CALL sp_DatLich(2, 4, @d_2, '11:00:00', '3', 'WALKIN', 'Layer nam', @id);
-UPDATE LICHHEN SET TrangThaiLH='DangPhucVu' WHERE MaLH=@id;
-UPDATE LICHHEN SET TrangThaiLH='HoanThanh'  WHERE MaLH=@id;
-CALL sp_LapHoaDon(@id, 1, 'CHUYENKHOAN_QR');
-INSERT INTO DANHGIA (MaLH,SoSao,NoiDungDG) VALUES (@id, 5, 'Fade rất sạch, sẽ quay lại.');
-
-CALL sp_DatLich(3, 5, @d_1, '13:00:00', '1,2', 'WALKIN', NULL, @id);
-UPDATE LICHHEN SET TrangThaiLH='DangPhucVu' WHERE MaLH=@id;
-UPDATE LICHHEN SET TrangThaiLH='HoanThanh'  WHERE MaLH=@id;
-CALL sp_LapHoaDon(@id, 2, 'TIENMAT');
-INSERT INTO DANHGIA (MaLH,SoSao,NoiDungDG) VALUES (@id, 4, 'Thợ nhiệt tình, giá hợp lý.');
-
-CALL sp_DatLich(4, 6, @d_2, '15:00:00', '4', 'WALKIN', 'Uốn nhẹ', @id);
-UPDATE LICHHEN SET TrangThaiLH='DangPhucVu' WHERE MaLH=@id;
-UPDATE LICHHEN SET TrangThaiLH='HoanThanh'  WHERE MaLH=@id;
-CALL sp_LapHoaDon(@id, 2, 'TIENMAT');
-INSERT INTO DANHGIA (MaLH,SoSao,NoiDungDG) VALUES (@id, 5, 'Tóc uốn tự nhiên, rất ưng.');
-
--- Lịch sắp tới
-INSERT INTO LICHHEN (MaKH,MaTho,NgayHen,GioBatDau,GioKetThucDK,TongThoiLuong,TongTienTamTinh,KenhDatLich,GhiChuKhach,TrangThaiLH)
-VALUES (2,4,@d1,'14:00:00','15:30:00',90,350000,'ONLINE','Nhuộm nâu khói','ChoXacNhan');
-SET @id = LAST_INSERT_ID();
-INSERT INTO CHITIET_LICHHEN (MaLH,MaDV,DonGiaApDung,ThoiLuongPhut) VALUES (@id,5,350000,90);
-
-INSERT INTO LICHHEN (MaKH,MaTho,NgayHen,GioBatDau,GioKetThucDK,TongThoiLuong,TongTienTamTinh,KenhDatLich,TrangThaiLH)
-VALUES (4,6,@d2,'09:30:00','10:15:00',45,150000,'ONLINE','ChoXacNhan');
-SET @id = LAST_INSERT_ID();
-INSERT INTO CHITIET_LICHHEN (MaLH,MaDV,DonGiaApDung,ThoiLuongPhut) VALUES (@id,3,150000,45);
-UPDATE LICHHEN SET TrangThaiLH='DaXacNhan' WHERE MaLH=@id;
