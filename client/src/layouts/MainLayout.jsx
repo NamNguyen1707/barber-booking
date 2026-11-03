@@ -23,10 +23,10 @@ export default function MainLayout() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
             <span className="flex h-9 w-8 items-center justify-center rounded-t-full rounded-b-sm border border-copper bg-coffee font-display text-lg text-copper">
-              36
+              GC
             </span>
             <span className="font-display text-xl uppercase tracking-wider text-cream">
-              36<span className="text-copper">SHINE</span>
+              GENT <span className="text-copper">CUT</span>
             </span>
           </Link>
 
@@ -65,7 +65,7 @@ export default function MainLayout() {
       )}
 
       <footer className="bg-espresso py-5 text-center text-xs text-cream/50">
-        36SHINE · Đồ án chuyên ngành · Trường ĐH Công Nghệ Sài Gòn
+  
       </footer>
     </div>
   );
