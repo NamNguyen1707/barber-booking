@@ -12,3 +12,7 @@ exports.login = async (req, res) => {
 exports.me = async (req, res) => {
   res.json({ user: req.user });
 };
+
+exports.google = async (req, res) => {
+  res.json(await service.googleLogin(req.body));
+};

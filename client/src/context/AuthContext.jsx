@@ -22,13 +22,32 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  const saveSession = (data) => {
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    setUser(data.user);
+    return data.user;
+  };
+
+  // Trả về { user } nếu đăng nhập được, hoặc { needPhone, email, name } nếu cần thêm số điện thoại
+  const loginWithGoogle = async (credential, soDienThoai) => {
+    const { data } = await api.post('/auth/google', { credential, soDienThoai });
+    if (data.needPhone) return data;
+    return { user: saveSession(data) };
+  };
+
+  const register = async (form) => {
+    await api.post('/auth/register', form);
+    return login(form.soDienThoai, form.matKhau);
+  };
+
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, login, register, loginWithGoogle, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

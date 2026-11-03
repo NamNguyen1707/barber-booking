@@ -3,6 +3,7 @@ import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import StaffHome from './pages/StaffHome';
 import AdminHome from './pages/AdminHome';
 import NotFound from './pages/NotFound';
@@ -14,6 +15,7 @@ export default function App() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         <Route element={<ProtectedRoute roles={STAFF_ROLES} />}>
           <Route path="/staff" element={<StaffHome />} />
