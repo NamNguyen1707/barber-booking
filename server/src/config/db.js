@@ -15,6 +15,12 @@ function getPool() {
       waitForConnections: true,
       connectionLimit: 10,
       connectTimeout: 30000,
+      // Aiven/Render đóng kết nối nhàn rỗi: giữ kết nối sống và bỏ kết nối cũ trước khi bị server cắt,
+      // tránh lỗi "Connection lost" ở lần gọi đầu tiên sau một thời gian không dùng
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
+      maxIdle: 2,
+      idleTimeout: 60000,
       charset: 'utf8mb4',
       dateStrings: true,      // DATE/TIME/DATETIME trả về chuỗi, không bị lệch múi giờ
       decimalNumbers: true,   // DECIMAL trả về số
