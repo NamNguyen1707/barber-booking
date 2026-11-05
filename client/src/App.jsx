@@ -6,6 +6,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import StaffHome from './pages/StaffHome';
 import AdminHome from './pages/AdminHome';
+import Booking from './pages/Booking';
+import MyBookings from './pages/MyBookings';
 import NotFound from './pages/NotFound';
 import { ADMIN_ROLES, STAFF_ROLES } from './utils/roles';
 
@@ -16,6 +18,11 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        <Route element={<ProtectedRoute roles={['KHACHHANG']} />}>
+          <Route path="/booking" element={<Booking />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
+        </Route>
 
         <Route element={<ProtectedRoute roles={STAFF_ROLES} />}>
           <Route path="/staff" element={<StaffHome />} />

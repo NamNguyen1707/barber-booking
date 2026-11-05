@@ -13,10 +13,19 @@ export default function Home() {
       </p>
 
       {user ? (
-        <p className="text-lg">Xin chào, <b>{user.name}</b>!</p>
+        <div>
+          <p className="mb-4 text-lg">Xin chào, <b>{user.name}</b>!</p>
+          {user.role === 'KHACHHANG' && (
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link to="/booking" className="btn">Đặt lịch ngay</Link>
+              <Link to="/my-bookings" className="btn-outline">Lịch của tôi</Link>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link to="/login" className="btn">Đăng nhập để đặt lịch</Link>
+          <Link to="/booking" className="btn">Đặt lịch ngay</Link>
+          <Link to="/login" className="btn-outline">Đăng nhập</Link>
           <Link to="/register" className="btn-outline">Đăng ký</Link>
         </div>
       )}

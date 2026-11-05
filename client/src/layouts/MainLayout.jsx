@@ -32,6 +32,8 @@ export default function MainLayout() {
 
           <nav className="flex items-center gap-5 text-sm">
             <Link to="/" className={navLink}>Trang chủ</Link>
+            {(!user || user.role === 'KHACHHANG') && <Link to="/booking" className={navLink}>Đặt lịch</Link>}
+            {user?.role === 'KHACHHANG' && <Link to="/my-bookings" className={navLink}>Lịch của tôi</Link>}
             {user && user.role !== 'KHACHHANG' && (
               <Link to={homeFor(user.role)} className={navLink}>Khu vực làm việc</Link>
             )}
