@@ -5,11 +5,18 @@ import { ROLE_LABEL, homeFor } from '../utils/roles';
 const navLink = 'font-display uppercase tracking-wide text-cream/90 hover:text-copper';
 
 // Các trang có nền nâu phủ kín toàn bộ vùng nội dung
-const FULL_BLEED = ['/', '/login', '/register'];
+const FULL_BLEED = ['/'];
+
 export default function MainLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
+  // Trang đăng nhập và đăng ký là giao diện toàn màn hình theo thiết kế riêng
+  if (pathname === '/login' || pathname === '/register') {
+    return <Outlet />;
+  }
+
   const fullBleed = FULL_BLEED.includes(pathname);
 
   const handleLogout = () => {
@@ -65,7 +72,7 @@ export default function MainLayout() {
       )}
 
       <footer className="bg-espresso py-5 text-center text-xs text-cream/50">
-  
+        © 2026 GENT CUT. Tiệm cắt tóc nam chuẩn phong cách.
       </footer>
     </div>
   );

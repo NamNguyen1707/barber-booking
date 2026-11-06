@@ -12,6 +12,7 @@
   --font-display: "Oswald", "Be Vietnam Pro", sans-serif;
   --font-script: "Dancing Script", cursive;
   --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
 }
 
 @layer base {
