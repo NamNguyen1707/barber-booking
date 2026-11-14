@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { TOKEN_KEY, USER_KEY, ensureSession } from './session';
 
-export const TOKEN_KEY = 'bb_token';
-export const USER_KEY = 'bb_user';
+export { TOKEN_KEY, USER_KEY };
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
@@ -14,16 +14,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Token hết hạn / sai -> xóa đăng nhập và về trang login
+// Khi gặp lỗi 401: xóa token, đăng nhập ngầm lại và thử lại request ban đầu đúng 1 lần
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
-    const isLogin = err.config?.url?.includes('/auth/login');
-    if (err.response?.status === 401 && !isLogin) {
+  async (err) => {
+    const originalConfig = err.config;
+    const isLogin = originalConfig?.url?.includes('/auth/login');
+
+    if (err.response?.status === 401 && !isLogin && originalConfig && !originalConfig._retry) {
+      originalConfig._retry = true;
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
-      if (window.location.pathname !== '/login') window.location.href = '/login';
+      try {
+        const newToken = await ensureSession();
+        if (newToken) {
+          originalConfig.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalConfig);
+        }
+      } catch (loginErr) {
+        return Promise.reject(loginErr);
+      }
     }
+
     return Promise.reject(err);
   }
 );

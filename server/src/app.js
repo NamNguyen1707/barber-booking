@@ -1,3 +1,9 @@
+/* ==============================================================================
+   BACKEND SERVER ĐÃ ĐƯỢC ĐƯA VÀO COMMENT THEO YÊU CẦU.
+   KHI CẦN CHẠY LẠI BACKEND: CHỈ CẦN XÓA DÒNG '/*' NÀY VÀ DÒNG '*/' Ở CUỐI FILE.
+============================================================================== */
+
+/*
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -39,3 +45,4 @@ app.listen(PORT, () => {
   genShifts();
   setInterval(genShifts, 6 * 60 * 60 * 1000);
 });
+*/
