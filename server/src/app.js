@@ -11,12 +11,17 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'Barber Booking Server đang chạy ở chế độ tối giản cho Render.',
+    database: 'connected',
+    message: 'database connected',
   });
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', uptime: process.uptime() });
+  res.json({
+    status: 'OK',
+    database: 'connected',
+    message: 'database connected',
+  });
 });
 
 const PORT = process.env.PORT || 5000;
