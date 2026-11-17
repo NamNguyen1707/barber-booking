@@ -1,7 +1,6 @@
 /* ==============================================================================
    BACKEND SERVER ĐÃ ĐƯỢC ĐƯA VÀO COMMENT THEO YÊU CẦU.
-   KHI CẦN CHẠY LẠI BACKEND: CHỈ CẦN XÓA DÒNG '/*' NÀY VÀ DÒNG '*/' Ở CUỐI FILE.
-============================================================================== */
+   KHI CẦN CHẠY LẠI BACKEND: CHỈ CẦN XÓA DÒNG '/*' NÀY VÀ DÒNG '*/
 
 /*
 require('dotenv').config();
