@@ -1,6 +1,32 @@
 // ==============================================================================
-// BACKEND SERVER ĐÃ ĐƯỢC TẠM DỪNG (COMMENT THEO YÊU CẦU).
-// KHI CẦN CHẠY LẠI BACKEND: CHỈ CẦN XÓA DÒNG '/*' (DÒNG 8) VÀ DÒNG '*/' Ở CUỐI FILE.
+// SERVER TỐI GIẢN (CHẠY ĐỂ GIỮ PORT CHO RENDER DEPLOY THÀNH CÔNG, KHÔNG CẦN DATABASE)
+// ==============================================================================
+const express = require('express');
+const cors = require('cors');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Barber Booking Server đang chạy ở chế độ tối giản cho Render.',
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', uptime: process.uptime() });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server chạy tại http://localhost:${PORT}`);
+});
+
+// ==============================================================================
+// DƯỚI ĐÂY LÀ TOÀN BỘ CODE BACKEND GỐC (KÈM KẾT NỐI MYSQL & ĐẦY ĐỦ ROUTES).
+// KHI CẦN KHÔI PHỤC: XÓA ĐOẠN SERVER TỐI GIẢN PHÍA TRÊN VÀ BỎ DẤU '/*' & '*/' DƯỚI ĐÂY.
 // ==============================================================================
 
 /*
